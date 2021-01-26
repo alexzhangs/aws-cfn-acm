@@ -106,9 +106,19 @@
     },
     "ValidateAcmDomain": {
       "Type": "AWS::CloudFormation::CustomResource",
+      "Condition": "EnableAcmAutoValidation",
       "Properties": {
         "ServiceToken": {"Fn::GetAtt": ["LambdaValidateAcmDomain", "Arn"]},
       }
+    }
+  },
+  "Conditions": {
+    "EnableAcmAutoValidation": {
+      "Fn::And": [
+        {"Fn::Not": [{"Fn::Equals":["", {"Ref": "DomainNameServer"}]}]},
+        {"Fn::Not": [{"Fn::Equals":["", {"Ref": "DomainNameServerUsername"}]}]},
+        {"Fn::Not": [{"Fn::Equals":["", {"Ref": "DomainNameServerCredential"}]}]}
+      ]
     }
   },
   "Parameters": {
