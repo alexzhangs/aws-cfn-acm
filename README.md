@@ -54,47 +54,47 @@ file.
     1. Use the `pyminifier` to minimize the size of the Lambda code if
     the code size is greater than 4KB.
 
-    ```
-    pip install pyminifier
-    pyminify LambdaValidateAcmDomain.py > LambdaValidateAcmDomain-pyminify.py
-    ```
+        ```
+        $ pip install pyminifier
+        $ pyminify LambdaValidateAcmDomain.py > LambdaValidateAcmDomain-pyminify.py
+        ```
 
     1. Use `import cfnresponse` as the exact style, to let
     CloudFormation injects `cfnresponse` package for you.
 
 1. Don't specify `HostedZoneId` in `DomainValidationOptions` if don't
-need it, you only need it with AWS Route53 service involved.
+   need it, you only need it with AWS Route53 service involved.
 
-```json
-        "DomainValidationOptions": [{
-          ...
-          "HostedZoneId": ""
-        }],
-```
+    ```json
+    "DomainValidationOptions": [{
+        ...
+        "HostedZoneId": ""
+    }],
+    ```
 
-An empty option `HostedZoneId` would cause the certificate
-stuck at `CREATE_IN_PROGRESS` status even the domain has been
-successfully validated. 
+    An empty option `HostedZoneId` would cause the certificate
+    stuck at `CREATE_IN_PROGRESS` status even the domain has been
+    successfully validated. 
 
 1. The custom resource `ValidateAcmDomain` must not depend on resource
-`Acm`.
+   `Acm`.
 
-The dependency will let the Lambda function code much easier to get
-the `Acm` resource, but it will cause a dependency deadlock.
+    The dependency will let the Lambda function code much easier to get
+    the `Acm` resource, but it will cause a dependency deadlock.
 
-The dependency will cause the custom resource `ValidateAcmDomain`
-never be created. it will wait forever for the `Acm` to be complete, and
-which will remain in `CREATE_IN_PROGRESS` since it needs the custom
-resource to validate it.
+    The dependency will cause the custom resource `ValidateAcmDomain`
+    never be created. it will wait forever for the `Acm` to be complete, and
+    which will remain in `CREATE_IN_PROGRESS` since it needs the custom
+    resource to validate it.
 
 ## Troubleshooting
 
 1. The DNS records for the validation were not removed after the custom
-resource is deleted.
+   resource is deleted.
 
-The is because the resource `Acm` is already deleted when the custom
-resource `ValidateAcmDomain` is triggering the Lambda function to
-retrieve DNS records from `Acm` and delete them in the DNS service.
+    The is because the resource `Acm` is already deleted when the custom
+    resource `ValidateAcmDomain` is triggering the Lambda function to
+    retrieve DNS records from `Acm` and delete them in the DNS service.
 
-I don't see an elegant solution for this problem for now, tell me please if
-you do.
+    I don't see an elegant solution for this problem for now, tell me please if
+    you do.
