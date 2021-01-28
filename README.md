@@ -87,7 +87,7 @@ file.
     which will remain in `CREATE_IN_PROGRESS` since it needs the custom
     resource to validate it.
 
-## Troubleshooting
+## Known Issues
 
 1. The DNS records for the validation were not removed after the custom
    resource is deleted.

@@ -25,25 +25,25 @@ def lambda_handler(event, context):
         requesttype = event['RequestType']
 
         print('request type: {}, domain: {}, nameserver: {}'.format(requesttype, domain, ns))
-        api_cls_name = API_CLS_NAME.get(ns)
-        api_cls = globals().get(api_cls_name)
-        api = api_cls(ns_username, ns_credential)
-        cert_arn = wait_call(120, 3, get_acm_cert_arn_by_domain, domain)
-        acm = boto3.client('acm')
-        cert = acm.describe_certificate(CertificateArn=cert_arn)['Certificate']
-        for item in cert['DomainValidationOptions']:
-            status = item['ValidationStatus']
-            record = item['ResourceRecord']
-            type = record['Type']
-            name = record['Name'].rstrip('.')
-            value = record['Value'].rstrip('.')
-            host = get_host_from_domain(name)
-            root = get_root_from_domain(name)
-
-            if requesttype in ['Create', 'Update'] and status == 'PENDING_VALIDATION':
-                api.create_record(domain=root, type=type, host=host, answer=value)
-            elif requesttype == 'Delete':
-                api.delete_record(domain=root, type=type, host=host)
+        if requesttype in ['Create', 'Update']:
+            api_cls_name = API_CLS_NAME.get(ns)
+            api_cls = globals().get(api_cls_name)
+            api = api_cls(ns_username, ns_credential)
+            cert_arn = wait_call(120, 3, get_acm_cert_arn_by_domain, domain)
+            acm = boto3.client('acm')
+            cert = acm.describe_certificate(CertificateArn=cert_arn)['Certificate']
+            for item in cert['DomainValidationOptions']:
+                status = item['ValidationStatus']
+                record = item['ResourceRecord']
+                type = record['Type']
+                name = record['Name'].rstrip('.')
+                value = record['Value'].rstrip('.')
+                host = get_host_from_domain(name)
+                root = get_root_from_domain(name)
+                if status == 'PENDING_VALIDATION':
+                    api.create_record(domain=root, type=type, host=host, answer=value)
+        elif requesttype == 'Delete':
+            pass
 
         cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
     except Exception as e:
